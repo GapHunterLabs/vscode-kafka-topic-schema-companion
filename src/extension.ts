@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { schemaFileNameFor, validate } from './schemaValidator';
+import { recordHit } from './reviewPrompt';
 
 let diagnostics: vscode.DiagnosticCollection;
 
@@ -12,7 +13,7 @@ function dirOf(uri: vscode.Uri): vscode.Uri {
   return vscode.Uri.joinPath(uri, '..');
 }
 
-async function refresh(document: vscode.TextDocument): Promise<void> {
+async function refresh(context: vscode.ExtensionContext, document: vscode.TextDocument): Promise<void> {
   const name = basename(document.uri);
   const schemaFileName = schemaFileNameFor(name);
   if (!schemaFileName) {
@@ -63,6 +64,9 @@ async function refresh(document: vscode.TextDocument): Promise<void> {
     document.uri,
     violations.map((violation) => makeDiagnostic(`[${violation.path}] ${violation.message} (against ${schemaFileName})`)),
   );
+  for (const violation of violations) {
+    recordHit(context, `${document.uri.toString()}:${violation.path}`);
+  }
 }
 
 function makeDiagnostic(message: string): vscode.Diagnostic {
@@ -76,11 +80,11 @@ export function activate(context: vscode.ExtensionContext): void {
   diagnostics = vscode.languages.createDiagnosticCollection('kafkaTopicSchemaCompanion');
   context.subscriptions.push(diagnostics);
 
-  vscode.workspace.textDocuments.forEach((doc) => void refresh(doc));
+  vscode.workspace.textDocuments.forEach((doc) => void refresh(context, doc));
 
   context.subscriptions.push(
-    vscode.workspace.onDidOpenTextDocument((doc) => void refresh(doc)),
-    vscode.workspace.onDidChangeTextDocument((event) => void refresh(event.document)),
+    vscode.workspace.onDidOpenTextDocument((doc) => void refresh(context, doc)),
+    vscode.workspace.onDidChangeTextDocument((event) => void refresh(context, event.document)),
     vscode.workspace.onDidCloseTextDocument((document) => diagnostics.delete(document.uri)),
   );
 }
