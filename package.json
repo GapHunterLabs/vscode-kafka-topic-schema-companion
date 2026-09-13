@@ -2,7 +2,7 @@
   "name": "kafka-topic-schema-companion",
   "displayName": "Kafka Topic Schema Companion",
   "description": "Validates a Kafka sample/message JSON file against its sibling schema.json file -- inline in the editor, no broker connection. No data leaves your editor.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "GapHunterLabs",
   "icon": "images/icon.png",
   "license": "Apache-2.0",
